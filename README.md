@@ -1,2 +1,2 @@
-# customer-management-frontend
+# Customer Management System Frontend
 
