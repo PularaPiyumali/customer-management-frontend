@@ -120,7 +120,7 @@ The application will be available at `http://localhost:3000`
 <img width="1872" height="854" alt="Screenshot 2025-07-24 141704" src="https://github.com/user-attachments/assets/e5107d60-7544-42ac-a772-d816b6d12962" />
 
 
--Edit Customers
+- Edit Customers
 
 <img width="1870" height="851" alt="Screenshot 2025-07-24 141733" src="https://github.com/user-attachments/assets/3bbdd0c6-f9a2-43a0-acad-62a206041cd6" />
 
