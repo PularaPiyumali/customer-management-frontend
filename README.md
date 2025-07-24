@@ -105,22 +105,22 @@ The application will be available at `http://localhost:3000`
 
 ### Screenshots
 
-### Dashboard Overview (with Excel File Upload)
+- Excel File Upload
 
 <img width="1898" height="853" alt="Screenshot 2025-07-24 141617" src="https://github.com/user-attachments/assets/510f7fa7-8be0-40d4-8e9b-6c5c0b295d9e" />
 
 
-### Customers Directory
+- Customers Directory
 
 <img width="1873" height="851" alt="Screenshot 2025-07-24 141627" src="https://github.com/user-attachments/assets/70622c87-6ac1-48ad-8589-792493a58243" />
 
 
-### Add Customers
+- Add Customers
 
 <img width="1872" height="854" alt="Screenshot 2025-07-24 141704" src="https://github.com/user-attachments/assets/e5107d60-7544-42ac-a772-d816b6d12962" />
 
 
-### Edit Customers
+-Edit Customers
 
 <img width="1870" height="851" alt="Screenshot 2025-07-24 141733" src="https://github.com/user-attachments/assets/3bbdd0c6-f9a2-43a0-acad-62a206041cd6" />
 
