@@ -80,7 +80,7 @@ export default function ExcelUpload() {
     uploadText: {
       margin: "10px 0",
       fontSize: "16px",
-      color: "#6c757d",
+      color: "black",
     },
     fileInput: {
       display: "none",
@@ -125,7 +125,7 @@ export default function ExcelUpload() {
     },
     uploadButton: {
       padding: "12px 24px",
-      backgroundColor: file ? "#28a745" : "#6c757d",
+      backgroundColor: file ? "#28a745" : "black",
       color: "white",
       border: "none",
       borderRadius: "6px",
@@ -135,13 +135,13 @@ export default function ExcelUpload() {
       transition: "background-color 0.3s ease",
     },
     uploadButtonHover: {
-      backgroundColor: file ? "#218838" : "#6c757d",
+      backgroundColor: file ? "#218838" : "black",
     },
   };
 
   return (
     <div style={styles.container}>
-      <h3 style={styles.title}>📊 Bulk Upload Customers</h3>
+      <h3 style={styles.title}>Bulk Upload Customers</h3>
 
       <div
         style={styles.uploadArea}
@@ -154,7 +154,7 @@ export default function ExcelUpload() {
         <div>📁</div>
         <p style={styles.uploadText}>
           Drag and drop an Excel file here, or{" "}
-          <span style={{ color: "#007bff", fontWeight: "500" }}>browse</span>
+          <span style={{ color: "black", fontWeight: "500" }}>browse</span>
         </p>
         <p style={{ fontSize: "12px", color: "#868e96", margin: "5px 0 0 0" }}>
           Supports .xlsx and .xls files
@@ -194,7 +194,7 @@ export default function ExcelUpload() {
             if (file) e.target.style.backgroundColor = "#28a745";
           }}
         >
-          {file ? "⬆️ Upload Excel File" : "📄 Select a file first"}
+          {file ? "Upload Excel File" : "Select a file first"}
         </button>
       </div>
     </div>

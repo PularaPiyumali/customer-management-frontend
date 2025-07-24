@@ -148,9 +148,9 @@ export default function CustomerTable() {
     },
     editButton: {
       padding: "6px 12px",
-      backgroundColor: "#343a40",
+      backgroundColor: "#000000",
       color: "white",
-      border: "1px solid #343a40",
+      border: "1px solid #000000",
       borderRadius: "4px",
       cursor: "pointer",
       fontSize: "11px",
@@ -178,28 +178,32 @@ export default function CustomerTable() {
     },
     pageButton: {
       padding: "8px 12px",
-      border: "1px solid #dee2e6",
-      backgroundColor: "white",
+      border: "1px solid #000000",
+      backgroundColor: "#000000",
+      color: "white",
       cursor: "pointer",
       borderRadius: "4px",
       fontSize: "14px",
       transition: "all 0.2s ease",
     },
     pageButtonActive: {
-      backgroundColor: "#007bff",
+      backgroundColor: "#000000",
       color: "white",
-      borderColor: "#007bff",
+      borderColor: "#000000",
     },
     pageButtonDisabled: {
       opacity: 0.5,
       cursor: "not-allowed",
+      backgroundColor: "#000000",
+      color: "white",
     },
     select: {
       padding: "6px 10px",
-      border: "1px solid #ced4da",
+      border: "1px solid #000000",
       borderRadius: "4px",
       fontSize: "14px",
-      backgroundColor: "white",
+      backgroundColor: "#000000",
+      color: "white",
     },
     loading: {
       textAlign: "center",
@@ -225,7 +229,7 @@ export default function CustomerTable() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h3 style={styles.title}>👥 Customer Directory</h3>
+        <h3 style={styles.title}>Customer Directory</h3>
       </div>
 
       <div style={styles.tableContainer}>
@@ -298,13 +302,13 @@ export default function CustomerTable() {
             {loading ? (
               <tr>
                 <td colSpan="7" style={styles.loading}>
-                  <div>⏳ Loading customers...</div>
+                  <div>Loading customers...</div>
                 </td>
               </tr>
             ) : customers.length === 0 ? (
               <tr>
                 <td colSpan="7" style={styles.noData}>
-                  <div>📭 No customers found</div>
+                  <div>No customers found</div>
                 </td>
               </tr>
             ) : (
@@ -351,15 +355,15 @@ export default function CustomerTable() {
                         (window.location.href = `/edit-customer/${customer.id}`)
                       }
                       onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = "white";
-                        e.target.style.color = "#343a40";
+                        e.target.style.backgroundColor = "#333333";
+                        e.target.style.color = "white";
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = "#343a40";
+                        e.target.style.backgroundColor = "#000000";
                         e.target.style.color = "white";
                       }}
                     >
-                      ✏️ Edit
+                      Update
                     </button>
                   </td>
                 </tr>
@@ -396,6 +400,16 @@ export default function CustomerTable() {
             }}
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 0}
+            onMouseEnter={(e) => {
+              if (page !== 0) {
+                e.target.style.backgroundColor = "#333333";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page !== 0) {
+                e.target.style.backgroundColor = "#000000";
+              }
+            }}
           >
             ← Previous
           </button>
@@ -411,6 +425,16 @@ export default function CustomerTable() {
             }}
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages - 1}
+            onMouseEnter={(e) => {
+              if (page < totalPages - 1) {
+                e.target.style.backgroundColor = "#333333";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page < totalPages - 1) {
+                e.target.style.backgroundColor = "#000000";
+              }
+            }}
           >
             Next →
           </button>
