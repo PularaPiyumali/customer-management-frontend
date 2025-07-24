@@ -1,10 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
-
-// Create api service if it doesn't exist
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080",
-});
+import api from "../services/api";
 
 export default function CustomerTable() {
   const [customers, setCustomers] = useState([]);
@@ -52,11 +47,6 @@ export default function CustomerTable() {
   const handleSizeChange = (newSize) => {
     setSize(newSize);
     setPage(0);
-  };
-
-  const getSortIcon = (field) => {
-    if (orderBy !== field) return "↕️";
-    return direction === "asc" ? "↑" : "↓";
   };
 
   const formatMobileNumbers = (mobileNumbers) => {
@@ -249,7 +239,6 @@ export default function CustomerTable() {
               >
                 <div style={styles.sortableHeader}>
                   <span>Name</span>
-                  <span style={styles.sortIcon}>{getSortIcon("name")}</span>
                 </div>
               </th>
               <th
@@ -265,9 +254,6 @@ export default function CustomerTable() {
               >
                 <div style={styles.sortableHeader}>
                   <span>DOB</span>
-                  <span style={styles.sortIcon}>
-                    {getSortIcon("dateOfBirth")}
-                  </span>
                 </div>
               </th>
               <th
@@ -283,9 +269,6 @@ export default function CustomerTable() {
               >
                 <div style={styles.sortableHeader}>
                   <span>NIC</span>
-                  <span style={styles.sortIcon}>
-                    {getSortIcon("nicNumber")}
-                  </span>
                 </div>
               </th>
               <th style={{ ...styles.th, cursor: "default" }}>

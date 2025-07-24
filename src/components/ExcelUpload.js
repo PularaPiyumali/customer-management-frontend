@@ -40,7 +40,7 @@ export default function ExcelUpload() {
       await axios.post("/api/customers/bulk-upload", formData);
       alert("Upload successful!");
       setFile(null);
-      // Reset file input
+      //Reset file input
       document.getElementById("file-input").value = "";
     } catch (err) {
       console.error(err);

@@ -27,11 +27,16 @@ export default function CustomerForm({ existing }) {
     }
   );
 
+  //State to hold validation errors
+  const [errors, setErrors] = useState({});
+  //State for displaying general messages (e.g., success/error from API)
+  const [message, setMessage] = useState({ text: "", type: "" });
+
   const [cities, setCities] = useState([]);
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  //Fetch master data
+  //Fetch master data (cities and countries)
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
@@ -57,7 +62,10 @@ export default function CustomerForm({ existing }) {
           status: error.response?.status,
           data: error.response?.data,
         });
-        alert("Error loading cities and countries data");
+        setMessage({
+          text: "Error loading cities and countries data.",
+          type: "error",
+        });
       } finally {
         setLoading(false);
       }
@@ -66,25 +74,141 @@ export default function CustomerForm({ existing }) {
     fetchMasterData();
   }, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
+
+    //Basic Information Validation
+    if (!form.name.trim()) {
+      newErrors.name = "Full Name is required.";
+      isValid = false;
+    }
+    if (!form.dateOfBirth) {
+      newErrors.dateOfBirth = "Date of Birth is required.";
+      isValid = false;
+    }
+    if (!form.nicNumber.trim()) {
+      newErrors.nicNumber = "NIC Number is required.";
+      isValid = false;
+    } else if (!/^[0-9]{9}[vVxX]$|^[0-9]{12}$/.test(form.nicNumber)) {
+      newErrors.nicNumber =
+        "Invalid NIC Number format. Use 9 digits + V/X or 12 digits.";
+      isValid = false;
+    }
+
+    //Mobile Numbers Validation
+    if (
+      form.mobileNumbers.length === 0 ||
+      form.mobileNumbers[0].trim() === ""
+    ) {
+      newErrors.mobileNumbers = "At least one mobile number is required.";
+      isValid = false;
+    } else {
+      form.mobileNumbers.forEach((num, index) => {
+        if (!num.trim()) {
+          newErrors[`mobileNumbers[${index}]`] =
+            "Mobile number cannot be empty.";
+          isValid = false;
+        } else if (!/^\d{10}$/.test(num)) {
+          newErrors[`mobileNumbers[${index}]`] =
+            "Mobile number must be 10 digits.";
+          isValid = false;
+        }
+      });
+    }
+
+    //Addresses Validation
+    if (form.addresses.length === 0) {
+      newErrors.addresses = "At least one address is required.";
+      isValid = false;
+    } else {
+      form.addresses.forEach((addr, index) => {
+        if (!addr.addressLine1.trim()) {
+          newErrors[`addresses[${index}].addressLine1`] =
+            "Address Line 1 is required.";
+          isValid = false;
+        }
+        if (!addr.cityId) {
+          newErrors[`addresses[${index}].cityId`] = "City is required.";
+          isValid = false;
+        }
+        if (!addr.countryName) {
+          newErrors[`addresses[${index}].countryName`] = "Country is required.";
+          isValid = false;
+        }
+      });
+    }
+
+    //Family Members Validation
+    form.familyMembers.forEach((member, index) => {
+      const isMemberFilled =
+        member.familyMemberName.trim() ||
+        member.nicNumber.trim() ||
+        member.dateOfBirth.trim();
+      if (isMemberFilled) {
+        if (!member.familyMemberName.trim()) {
+          newErrors[`familyMembers[${index}].familyMemberName`] =
+            "Family Member Name is required.";
+          isValid = false;
+        }
+        if (!member.nicNumber.trim()) {
+          newErrors[`familyMembers[${index}].nicNumber`] =
+            "NIC Number is required.";
+          isValid = false;
+        } else if (!/^[0-9]{9}[vVxX]$|^[0-9]{12}$/.test(member.nicNumber)) {
+          newErrors[`familyMembers[${index}].nicNumber`] =
+            "Invalid NIC Number format. Use 9 digits + V/X or 12 digits.";
+          isValid = false;
+        }
+        if (!member.dateOfBirth) {
+          newErrors[`familyMembers[${index}].dateOfBirth`] =
+            "Date of Birth is required.";
+          isValid = false;
+        }
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
   };
 
+  //Handle changes for main form fields
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    //Clear error for the field being changed
+    setErrors((prevErrors) => ({ ...prevErrors, [e.target.name]: undefined }));
+  };
+
+  //Handle changes for mobile numbers array
   const handleMobileChange = (index, value) => {
     const newNumbers = [...form.mobileNumbers];
     newNumbers[index] = value;
     setForm({ ...form, mobileNumbers: newNumbers });
+    //Clear error for the specific mobile number field
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [`mobileNumbers[${index}]`]: undefined,
+    }));
   };
 
+  //Add a new mobile number input field
   const addMobile = () => {
     setForm({ ...form, mobileNumbers: [...form.mobileNumbers, ""] });
   };
 
+  //Remove a mobile number input field
   const removeMobile = (index) => {
     const newNumbers = form.mobileNumbers.filter((_, i) => i !== index);
     setForm({ ...form, mobileNumbers: newNumbers });
+    //Clear any errors related to the removed mobile number
+    setErrors((prevErrors) => {
+      const updatedErrors = { ...prevErrors };
+      delete updatedErrors[`mobileNumbers[${index}]`];
+      return updatedErrors;
+    });
   };
 
+  //Handle changes for address array fields
   const handleAddressChange = (index, field, value) => {
     const newAddresses = [...form.addresses];
 
@@ -103,8 +227,14 @@ export default function CustomerForm({ existing }) {
     }
 
     setForm({ ...form, addresses: newAddresses });
+    //Clear error for the specific address field
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [`addresses[${index}].${field}`]: undefined,
+    }));
   };
 
+  //Add a new address input group
   const addAddress = () => {
     setForm({
       ...form,
@@ -121,17 +251,33 @@ export default function CustomerForm({ existing }) {
     });
   };
 
+  //Remove an address input group
   const removeAddress = (index) => {
     const newAddresses = form.addresses.filter((_, i) => i !== index);
     setForm({ ...form, addresses: newAddresses });
+    //Clear any errors related to the removed address
+    setErrors((prevErrors) => {
+      const updatedErrors = { ...prevErrors };
+      delete updatedErrors[`addresses[${index}].addressLine1`];
+      delete updatedErrors[`addresses[${index}].cityId`];
+      delete updatedErrors[`addresses[${index}].countryName`];
+      return updatedErrors;
+    });
   };
 
+  //Handle changes for family members array fields
   const handleFamilyMemberChange = (index, field, value) => {
     const newFamilyMembers = [...form.familyMembers];
     newFamilyMembers[index][field] = value;
     setForm({ ...form, familyMembers: newFamilyMembers });
+    //Clear error for the specific family member field
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [`familyMembers[${index}].${field}`]: undefined,
+    }));
   };
 
+  //Add a new family member input group
   const addFamilyMember = () => {
     setForm({
       ...form,
@@ -142,13 +288,32 @@ export default function CustomerForm({ existing }) {
     });
   };
 
+  //Remove a family member input group
   const removeFamilyMember = (index) => {
     const newFamilyMembers = form.familyMembers.filter((_, i) => i !== index);
     setForm({ ...form, familyMembers: newFamilyMembers });
+    //Clear any errors related to the removed family member
+    setErrors((prevErrors) => {
+      const updatedErrors = { ...prevErrors };
+      delete updatedErrors[`familyMembers[${index}].familyMemberName`];
+      delete updatedErrors[`familyMembers[${index}].nicNumber`];
+      delete updatedErrors[`familyMembers[${index}].dateOfBirth`];
+      return updatedErrors;
+    });
   };
 
+  //Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    //Validate the form before submission
+    if (!validateForm()) {
+      setMessage({
+        text: "Please correct the errors in the form.",
+        type: "error",
+      });
+      return;
+    }
 
     //Filter out empty family members
     const filteredForm = {
@@ -181,7 +346,7 @@ export default function CustomerForm({ existing }) {
         console.log("Update Response Status:", response.status);
         console.log("Update Response Headers:", response.headers);
 
-        alert("Customer updated!");
+        setMessage({ text: "Customer updated successfully!", type: "success" });
       } else {
         console.log("Creating new customer");
         console.log("POST Request URL:", "api/customers");
@@ -194,7 +359,8 @@ export default function CustomerForm({ existing }) {
         console.log("Create Response Status:", response.status);
         console.log("Create Response Headers:", response.headers);
 
-        alert("Customer created!");
+        setMessage({ text: "Customer created successfully!", type: "success" });
+        //Reset form after successful creation
         setForm({
           name: "",
           dateOfBirth: "",
@@ -213,6 +379,7 @@ export default function CustomerForm({ existing }) {
             { familyMemberName: "", nicNumber: "", dateOfBirth: "" },
           ],
         });
+        setErrors({});
       }
     } catch (err) {
       console.error("Submit Error:", err);
@@ -226,7 +393,7 @@ export default function CustomerForm({ existing }) {
         JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
       );
 
-      alert("Error occurred!");
+      setMessage({ text: "Error occurred during submission.", type: "error" });
     }
   };
 
@@ -235,7 +402,7 @@ export default function CustomerForm({ existing }) {
       maxWidth: "1000px",
       margin: "20px auto",
       padding: "20px",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: "Inter, sans-serif",
       backgroundColor: "#ffffff",
       minHeight: "100vh",
     },
@@ -271,7 +438,7 @@ export default function CustomerForm({ existing }) {
       border: "2px solid #e0e0e0",
       borderRadius: "8px",
       fontSize: "16px",
-      marginBottom: "15px",
+      marginBottom: "5px",
       width: "100%",
       boxSizing: "border-box",
       transition: "border-color 0.2s ease, box-shadow 0.2s ease",
@@ -290,7 +457,7 @@ export default function CustomerForm({ existing }) {
       backgroundColor: "#ffffff",
       color: "#333333",
       cursor: "pointer",
-      marginBottom: "15px",
+      marginBottom: "5px",
       width: "100%",
       boxSizing: "border-box",
       transition: "border-color 0.2s ease",
@@ -390,6 +557,29 @@ export default function CustomerForm({ existing }) {
       color: "#6c757d",
       fontSize: "18px",
     },
+    errorMessage: {
+      color: "#dc3545",
+      fontSize: "12px",
+      marginTop: "5px",
+      marginBottom: "10px",
+    },
+    messageBox: {
+      padding: "10px 15px",
+      borderRadius: "8px",
+      marginBottom: "20px",
+      textAlign: "center",
+      fontWeight: "bold",
+    },
+    successMessage: {
+      backgroundColor: "#d4edda",
+      color: "#155724",
+      border: "1px solid #c3e6cb",
+    },
+    errorMessageStyle: {
+      backgroundColor: "#f8d7da",
+      color: "#721c24",
+      border: "1px solid #f5c6cb",
+    },
   };
 
   if (loading) {
@@ -417,46 +607,85 @@ export default function CustomerForm({ existing }) {
         </div>
 
         <div style={styles.cardBody}>
+          {message.text && (
+            <div
+              style={{
+                ...styles.messageBox,
+                ...(message.type === "success"
+                  ? styles.successMessage
+                  : styles.errorMessageStyle),
+              }}
+            >
+              {message.text}
+            </div>
+          )}
           <form onSubmit={handleSubmit} style={styles.form}>
             {/* Basic Information */}
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>Basic Information</h3>
 
               <input
-                style={styles.input}
+                style={{
+                  ...styles.input,
+                  borderColor: errors.name
+                    ? styles.errorMessage.color
+                    : styles.input.borderColor,
+                }}
                 type="text"
                 name="name"
                 placeholder="Full Name"
                 value={form.name}
                 onChange={handleChange}
-                required
                 onFocus={(e) =>
                   Object.assign(e.target.style, styles.inputFocus)
                 }
                 onBlur={(e) => {
-                  e.target.style.borderColor = "#e0e0e0";
+                  e.target.style.borderColor = errors.name
+                    ? styles.errorMessage.color
+                    : "#e0e0e0";
                   e.target.style.boxShadow = "none";
                 }}
               />
+              {errors.name && (
+                <div style={styles.errorMessage}>{errors.name}</div>
+              )}
 
               <div style={styles.addressGrid}>
-                <input
-                  style={styles.input}
-                  type="date"
-                  name="dateOfBirth"
-                  value={form.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                />
-                <input
-                  style={styles.input}
-                  type="text"
-                  name="nicNumber"
-                  placeholder="NIC Number"
-                  value={form.nicNumber}
-                  onChange={handleChange}
-                  required
-                />
+                <div>
+                  <input
+                    style={{
+                      ...styles.input,
+                      borderColor: errors.dateOfBirth
+                        ? styles.errorMessage.color
+                        : styles.input.borderColor,
+                    }}
+                    type="date"
+                    name="dateOfBirth"
+                    value={form.dateOfBirth}
+                    onChange={handleChange}
+                  />
+                  {errors.dateOfBirth && (
+                    <div style={styles.errorMessage}>{errors.dateOfBirth}</div>
+                  )}
+                </div>
+                <div>
+                  <input
+                    style={{
+                      ...styles.input,
+                      borderColor: errors.nicNumber
+                        ? styles.errorMessage.color
+                        : styles.input.borderColor,
+                    }}
+                    type="text"
+                    name="nicNumber"
+                    placeholder="NIC Number"
+                    value={form.nicNumber}
+                    onChange={handleChange}
+                  />
+                  {errors.nicNumber && (
+                    <div style={styles.errorMessage}>{errors.nicNumber}</div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -466,7 +695,14 @@ export default function CustomerForm({ existing }) {
               {form.mobileNumbers.map((num, index) => (
                 <div key={index} style={styles.flexRow}>
                   <input
-                    style={{ ...styles.input, flex: 1, marginBottom: 0 }}
+                    style={{
+                      ...styles.input,
+                      flex: 1,
+                      marginBottom: 0,
+                      borderColor: errors[`mobileNumbers[${index}]`]
+                        ? styles.errorMessage.color
+                        : styles.input.borderColor,
+                    }}
                     type="tel"
                     placeholder={`Mobile ${index + 1}`}
                     value={num}
@@ -489,6 +725,20 @@ export default function CustomerForm({ existing }) {
                   )}
                 </div>
               ))}
+              {errors.mobileNumbers && (
+                <div style={styles.errorMessage}>{errors.mobileNumbers}</div>
+              )}
+              {form.mobileNumbers.map(
+                (_, index) =>
+                  errors[`mobileNumbers[${index}]`] && (
+                    <div
+                      key={`mobile-error-${index}`}
+                      style={styles.errorMessage}
+                    >
+                      {errors[`mobileNumbers[${index}]`]}
+                    </div>
+                  )
+              )}
               <button
                 type="button"
                 style={styles.buttonSecondary}
@@ -533,7 +783,12 @@ export default function CustomerForm({ existing }) {
                   </div>
 
                   <input
-                    style={styles.input}
+                    style={{
+                      ...styles.input,
+                      borderColor: errors[`addresses[${index}].addressLine1`]
+                        ? styles.errorMessage.color
+                        : styles.input.borderColor,
+                    }}
                     type="text"
                     placeholder="Address Line 1"
                     value={addr.addressLine1}
@@ -541,6 +796,11 @@ export default function CustomerForm({ existing }) {
                       handleAddressChange(index, "addressLine1", e.target.value)
                     }
                   />
+                  {errors[`addresses[${index}].addressLine1`] && (
+                    <div style={styles.errorMessage}>
+                      {errors[`addresses[${index}].addressLine1`]}
+                    </div>
+                  )}
 
                   <input
                     style={styles.input}
@@ -553,44 +813,70 @@ export default function CustomerForm({ existing }) {
                   />
 
                   <div style={styles.addressGrid}>
-                    <select
-                      style={styles.select}
-                      value={addr.cityId}
-                      onChange={(e) =>
-                        handleAddressChange(index, "cityId", e.target.value)
-                      }
-                      disabled={loading}
-                    >
-                      <option value="">Select City</option>
-                      {cities.map((city) => (
-                        <option key={city.id} value={city.id}>
-                          {city.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      style={styles.select}
-                      value={addr.countryName}
-                      onChange={(e) =>
-                        handleAddressChange(
-                          index,
-                          "countryName",
-                          e.target.value
-                        )
-                      }
-                      disabled={loading}
-                    >
-                      <option value="">Select Country</option>
-                      {countries.map((country) => (
-                        <option key={country.id} value={country.name}>
-                          {country.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <select
+                        style={{
+                          ...styles.select,
+                          borderColor: errors[`addresses[${index}].cityId`]
+                            ? styles.errorMessage.color
+                            : styles.select.borderColor,
+                        }}
+                        value={addr.cityId}
+                        onChange={(e) =>
+                          handleAddressChange(index, "cityId", e.target.value)
+                        }
+                        disabled={loading}
+                      >
+                        <option value="">Select City</option>
+                        {cities.map((city) => (
+                          <option key={city.id} value={city.id}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors[`addresses[${index}].cityId`] && (
+                        <div style={styles.errorMessage}>
+                          {errors[`addresses[${index}].cityId`]}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <select
+                        style={{
+                          ...styles.select,
+                          borderColor: errors[`addresses[${index}].countryName`]
+                            ? styles.errorMessage.color
+                            : styles.select.borderColor,
+                        }}
+                        value={addr.countryName}
+                        onChange={(e) =>
+                          handleAddressChange(
+                            index,
+                            "countryName",
+                            e.target.value
+                          )
+                        }
+                        disabled={loading}
+                      >
+                        <option value="">Select Country</option>
+                        {countries.map((country) => (
+                          <option key={country.id} value={country.name}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors[`addresses[${index}].countryName`] && (
+                        <div style={styles.errorMessage}>
+                          {errors[`addresses[${index}].countryName`]}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
+              {errors.addresses && (
+                <div style={styles.errorMessage}>{errors.addresses}</div>
+              )}
               <button
                 type="button"
                 style={styles.buttonSecondary}
@@ -635,7 +921,14 @@ export default function CustomerForm({ existing }) {
                   </div>
 
                   <input
-                    style={styles.input}
+                    style={{
+                      ...styles.input,
+                      borderColor: errors[
+                        `familyMembers[${index}].familyMemberName`
+                      ]
+                        ? styles.errorMessage.color
+                        : styles.input.borderColor,
+                    }}
                     type="text"
                     placeholder="Family Member Name"
                     value={member.familyMemberName}
@@ -647,34 +940,67 @@ export default function CustomerForm({ existing }) {
                       )
                     }
                   />
+                  {errors[`familyMembers[${index}].familyMemberName`] && (
+                    <div style={styles.errorMessage}>
+                      {errors[`familyMembers[${index}].familyMemberName`]}
+                    </div>
+                  )}
 
                   <div style={styles.addressGrid}>
-                    <input
-                      style={styles.input}
-                      type="text"
-                      placeholder="NIC Number"
-                      value={member.nicNumber}
-                      onChange={(e) =>
-                        handleFamilyMemberChange(
-                          index,
-                          "nicNumber",
-                          e.target.value
-                        )
-                      }
-                    />
-                    <input
-                      style={styles.input}
-                      type="date"
-                      placeholder="Date of Birth"
-                      value={member.dateOfBirth}
-                      onChange={(e) =>
-                        handleFamilyMemberChange(
-                          index,
-                          "dateOfBirth",
-                          e.target.value
-                        )
-                      }
-                    />
+                    <div>
+                      <input
+                        style={{
+                          ...styles.input,
+                          borderColor: errors[
+                            `familyMembers[${index}].nicNumber`
+                          ]
+                            ? styles.errorMessage.color
+                            : styles.input.borderColor,
+                        }}
+                        type="text"
+                        placeholder="NIC Number"
+                        value={member.nicNumber}
+                        onChange={(e) =>
+                          handleFamilyMemberChange(
+                            index,
+                            "nicNumber",
+                            e.target.value
+                          )
+                        }
+                      />
+                      {errors[`familyMembers[${index}].nicNumber`] && (
+                        <div style={styles.errorMessage}>
+                          {errors[`familyMembers[${index}].nicNumber`]}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        style={{
+                          ...styles.input,
+                          borderColor: errors[
+                            `familyMembers[${index}].dateOfBirth`
+                          ]
+                            ? styles.errorMessage.color
+                            : styles.input.borderColor,
+                        }}
+                        type="date"
+                        placeholder="Date of Birth"
+                        value={member.dateOfBirth}
+                        onChange={(e) =>
+                          handleFamilyMemberChange(
+                            index,
+                            "dateOfBirth",
+                            e.target.value
+                          )
+                        }
+                      />
+                      {errors[`familyMembers[${index}].dateOfBirth`] && (
+                        <div style={styles.errorMessage}>
+                          {errors[`familyMembers[${index}].dateOfBirth`]}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
