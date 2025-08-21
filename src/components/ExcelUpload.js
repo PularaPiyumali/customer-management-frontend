@@ -4,6 +4,8 @@ import axios from "axios";
 export default function ExcelUpload() {
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [jobId, setJobId] = useState(null);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const handleFile = (e) => {
     const selected = e.target.files[0];
@@ -37,20 +39,31 @@ export default function ExcelUpload() {
     formData.append("file", file);
 
     try {
-      await axios.post("/api/customers/bulk-upload", formData);
-      alert("Upload successful!");
-      setFile(null);
-      //Reset file input
-      document.getElementById("file-input").value = "";
+      const res = await axios.post("/api/customers/bulk-upload", formData);
+      const data = res.data;
+
+      setJobId(data.jobId || null);
+
+      if (data.status === "FAILED") {
+        setStatusMessage("Upload failed: " + data.message);
+      } else {
+        setStatusMessage(
+          `Upload started successfully! Job ID: ${data.jobId}. Check status with this ID.`
+        );
+        setFile(null);
+        document.getElementById("file-input").value = "";
+      }
     } catch (err) {
       console.error(err);
-      alert("Upload failed!");
+      setStatusMessage("Upload failed due to network/server error!");
     }
   };
 
   const removeFile = () => {
     setFile(null);
     document.getElementById("file-input").value = "";
+    setStatusMessage("");
+    setJobId(null);
   };
 
   const styles = {
@@ -82,9 +95,7 @@ export default function ExcelUpload() {
       fontSize: "16px",
       color: "black",
     },
-    fileInput: {
-      display: "none",
-    },
+    fileInput: { display: "none" },
     browseButton: {
       padding: "8px 16px",
       backgroundColor: "#007bff",
@@ -105,11 +116,7 @@ export default function ExcelUpload() {
       borderRadius: "4px",
       marginBottom: "15px",
     },
-    fileName: {
-      fontSize: "14px",
-      color: "#155724",
-      fontWeight: "500",
-    },
+    fileName: { fontSize: "14px", color: "#155724", fontWeight: "500" },
     removeButton: {
       padding: "4px 8px",
       backgroundColor: "#dc3545",
@@ -119,10 +126,7 @@ export default function ExcelUpload() {
       cursor: "pointer",
       fontSize: "12px",
     },
-    buttonContainer: {
-      display: "flex",
-      gap: "10px",
-    },
+    buttonContainer: { display: "flex", gap: "10px" },
     uploadButton: {
       padding: "12px 24px",
       backgroundColor: file ? "#28a745" : "black",
@@ -134,8 +138,10 @@ export default function ExcelUpload() {
       fontWeight: "600",
       transition: "background-color 0.3s ease",
     },
-    uploadButtonHover: {
-      backgroundColor: file ? "#218838" : "black",
+    statusMessage: {
+      marginTop: "15px",
+      fontSize: "14px",
+      color: statusMessage.includes("failed") ? "#dc3545" : "#155724",
     },
   };
 
@@ -197,6 +203,8 @@ export default function ExcelUpload() {
           {file ? "Upload Excel File" : "Select a file first"}
         </button>
       </div>
+
+      {statusMessage && <p style={styles.statusMessage}>{statusMessage}</p>}
     </div>
   );
 }
